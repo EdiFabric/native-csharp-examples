@@ -1,0 +1,15 @@
+{
+  "default": "",
+  "maps": {
+    "x12:005010X222A1:837": {
+			"type": 1,
+			"name": "Map837P.json",
+			"location": "..\\..\\..\\MAP"
+		},
+    "x12:005010X220A1:834": {
+      "type": 1,
+      "name": "Map834.json",
+      "location": "..\\..\\..\\MAP"
+    }
+  }
+}
