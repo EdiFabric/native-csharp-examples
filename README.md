@@ -14,10 +14,10 @@ The examples use the serial key for the free plan. You don't need to aquire a se
 Download edifabric-x12-tools.dll from edifabric and copy it to the Debug\net10.0 and Release\net10.0 folders.
 
 ## 5. Getting started
-- How to read, parse or translate X12 files, go to [Parse_X12_Files](./X12/Examples/Parse_X12_Files.cs)! .
-- How to validate X12 transactions and envelopes, go to Validate_X12_Files.
-- How to generate X12 acknowledgments such as TA1, 999, and 997, go to Generate_X12_Acknowledgments.
-- How to create or build X12 files, go to Create_X12_Files.
+- How to read, parse or translate X12 files, go to [Parse_X12_Files](./X12/Examples/Parse_X12_Files.cs).
+- How to validate X12 transactions and envelopes, go to [Validate_X12_Files](./X12/Examples/Validate_X12_Files.cs).
+- How to generate X12 acknowledgments such as TA1, 999, and 997, go to [Generate_X12_Acknowledgments](./X12/Examples/Generate_X12_Acknowledgments.cs).
+- How to create or build X12 files, go to [Create_X12_Files](./X12/Examples/Create_X12_Files.cs).
 
 ## 6. EDI Templates
 EdiFabric supports all X12/HIPAA versions and message types. We have an extensive library of EDI templates, however, if you can't find a particular transaction, please let us know.   
