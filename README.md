@@ -11,9 +11,6 @@ target machine.
 - **Portable** — a single native library per platform, no runtime install.
 - **Simple ABI** — a handful of C entry points returning integer status codes.
 
-Copyright © EdiFabric 2026. Use of this library requires a valid license
-(see [Licensing](#licensing)).
-
 ---
 
 ## Contents
