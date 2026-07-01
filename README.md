@@ -137,6 +137,8 @@ Conventions used by every function:
   length out-parameter; reallocate and call again.
 - Exceptions never cross the boundary.
 
+  The C# examples provide a managed wrapper [`X12Client`](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/X12Client.cs) around the edifabric-x12-tools native DLL.
+
 ### Model
 
 ```c
