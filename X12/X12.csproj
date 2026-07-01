@@ -13,7 +13,7 @@
   <ItemGroup>
     <EmbeddedResource Include="EDI\837P.txt" />
     <EmbeddedResource Include="MAP\Map.json" />
-    <EmbeddedResource Include="MAP\Map834.json" />
+    <EmbeddedResource Include="MAP\Model834.json" />
   </ItemGroup>
 
 </Project>
