@@ -1,4 +1,4 @@
-# ediFabric Native
+# ediFabric Native C# Examples
 
 **ediFabric Native** is a self-contained, high-performance X12 EDI engine compiled
 ahead-of-time to a native shared library. It converts X12 EDI to JSON (and back),
