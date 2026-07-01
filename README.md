@@ -293,8 +293,8 @@ The values for the splitter can be found in EdiNation by loading a sample file. 
 
 The easiest way to get the splitter configuration is to click on the copy button under SPLITTER that has the full splitter JSON pre-configured.
 
-[!NOTE]
-If a segment does not show a SPLITTER copy button, than splitting is not possible by that segment.
+> [!NOTE]
+> If a segment does not show a SPLITTER copy button, than splitting is not possible by that segment.
 
 ![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/splitter.png)
 
