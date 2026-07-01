@@ -52,7 +52,7 @@ The distribution contains one native library per platform:
 Plus your **model files** (per transaction set) and a **map file** that tells the
 engine where to find them.
 
- [Download **ediFabric Native**](https://www.edifabric.com/).
+ [Download **ediFabric Native**](https://www.edifabric.com/)
 
 ---
 
@@ -84,6 +84,14 @@ All strings and payloads cross the boundary as **UTF‑8 byte buffers**
 ---
 
 ## Licensing
+
+> [!NOTE]
+> The examples are available with the Free plan which requires Serial model validation. 
+
+The free plan serial key available for these examples is:
+```
+bd96a836feca45cb91c86ee65d281f52
+```
 
 A license is validated during parse/build operations. Choose one of two models:
 
