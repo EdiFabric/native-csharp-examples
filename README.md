@@ -86,7 +86,8 @@ All strings and payloads cross the boundary as **UTF‑8 byte buffers**
 ## Licensing
 
 > [!NOTE]
-> The examples are available with a free license which can be used only with Serial model validation. 
+> The examples are available with a free plan which can be used only with Serial model validation. You don't need to call `install_license` with the free plan.
+> The only licensing call for the free plan must be `set_serial`.
 
 The serial key for the free plan is:
 ```
@@ -95,7 +96,7 @@ bd96a836feca45cb91c86ee65d281f52
 
 A license is validated during parse/build operations. Choose one of two models:
 
-### Token (recommended — offline, high throughput, NOT available for free or developer license types)
+### Token (recommended — offline, high throughput
 
 ```text
 get_token(serial)  → token      // one-time, requires internet; store the token
