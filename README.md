@@ -84,9 +84,9 @@ All strings and payloads cross the boundary as **UTF‑8 byte buffers**
 ## C# Examples
 
 1. [**Parse X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Parse_X12_Files.cs).
-2. **Validate X12 files** with your language's FFI.
-3. **Generate X12 Acknowledgments** with a token or serial (see [Licensing](#licensing)).
-4. **Create X12 files** once with `set_map`.
+2. [**Validate X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Validate_X12_Files.cs).
+3. [**Generate X12 Acknowledgments**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Generate_X12_Acknowledgments.cs).
+4. [**Create X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Create_X12_Files.cs).
 
 ---
 
