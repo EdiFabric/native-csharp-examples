@@ -11,7 +11,7 @@ target machine.
 - **Portable** — a single native library per platform, no runtime install.
 - **Simple ABI** — a handful of C entry points returning integer status codes.
 
----
+
 
 ## Contents
 
