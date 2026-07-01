@@ -47,7 +47,7 @@ The distribution contains one native library per platform:
 | macOS    | `edifabric-x12-tools.dylib`   |
 
 Plus your **model files** (per transaction set) and a **map file** that tells the
-engine where to find them.
+engine where to find them. See [Configuration JSON](#configuration-json) for details.
 
  [Download **ediFabric Native**](https://www.edifabric.com/)
 
