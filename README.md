@@ -86,8 +86,8 @@ All strings and payloads cross the boundary as **UTF‑8 byte buffers**
 ## Licensing
 
 > [!NOTE]
-> The examples are available with a free plan which can be used only with Serial model validation. You don't need to call `install_license` with the free plan.
-> The only licensing call for the free plan must be `set_serial`.
+> The examples are available with a free plan which can be used only with Serial model validation. 
+> You don't need to call `install_license` with the free plan, and the only licensing call must be `set_serial`.
 
 The serial key for the free plan is:
 ```
