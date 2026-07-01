@@ -45,9 +45,9 @@ The distribution contains one native library per platform:
 
 | Platform | File                          |
 |----------|-------------------------------|
-| Windows  | `EdiFabric.X12.Tools.dll`     |
-| Linux    | `EdiFabric.X12.Tools.so`      |
-| macOS    | `EdiFabric.X12.Tools.dylib`   |
+| Windows  | `edifabric-x12-tools.dll`     |
+| Linux    | `edifabric-x12-tools.so`      |
+| macOS    | `edifabric-x12-tools.dylib`   |
 
 Plus your **model files** (per transaction set) and a **map file** that tells the
 engine where to find them.
