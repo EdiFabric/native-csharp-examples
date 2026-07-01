@@ -52,7 +52,7 @@ The distribution contains one native library per platform:
 Plus your **model files** (per transaction set) and a **map file** that tells the
 engine where to find them.
 
-Download 'ediFabric Native' from [edifabric.com](https://www.edifabric.com/).
+Download **ediFabric Native** from [edifabric.com](https://www.edifabric.com/).
 
 ---
 
