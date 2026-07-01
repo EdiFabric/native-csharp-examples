@@ -244,7 +244,8 @@ or a custom model from [EdiNation Spec Builder](https://edination.edifabric.com/
 Create/modify models in OpenEDI format, upload them in EdiNation Spec Builder and download them as JSON for use in ediFabric Native.
 
 To download a model in either EdiNation Spec Library or EdiNation Spec Builder, 
-select the model first, then in the JSON view select the Download button in the top right corner:
+select the model first, then in the JSON view 
+select the Download button in the top right corner.
 ![Test](https://github.com/EdiFabric/native-csharp-examples/blob/main/model.png)
 
 ### ParseConfig (`parse` / `start_split`)
