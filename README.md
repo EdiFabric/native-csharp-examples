@@ -86,9 +86,9 @@ All strings and payloads cross the boundary as **UTF‑8 byte buffers**
 ## Licensing
 
 > [!NOTE]
-> The examples are available with the Free plan which requires Serial model validation. 
+> The examples are available with a free license which can be used only with Serial model validation. 
 
-The free plan serial key available for these examples is:
+The serial key for the free plan is:
 ```
 bd96a836feca45cb91c86ee65d281f52
 ```
