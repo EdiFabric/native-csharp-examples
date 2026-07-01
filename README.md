@@ -18,6 +18,7 @@ target machine.
 - [Package](#package)
 - [Requirements](#requirements)
 - [Quick start](#quick-start)
+- [Examples](#examples)
 - [Licensing](#licensing)
 - [API reference](#api-reference)
   - [Model](#model)
@@ -81,7 +82,7 @@ All strings and payloads cross the boundary as **UTF‑8 byte buffers**
 
 ---
 
-## C# Examples
+## Examples
 
 1. [**Parse X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Parse_X12_Files.cs).
 2. [**Validate X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Validate_X12_Files.cs).
