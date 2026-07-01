@@ -291,10 +291,10 @@ The splitter must be configured as follows:
 
 The values for the splitter can be found in EdiNation by loading a sample file. For example, if you want to split by loop 2000A in 837P, load an 837P file in EdiNation (or use the example one), click on the first segment in that loop, e.g., HL. `segment_id` is **CODE**,  `loop_id` is the last item in **PATH**, and `segment_depth` is **DEPTH**.
 
-The easiest way to get the splitter configuration is to click on the copy button under SPLITTER that has the full splitter JSON pre-configured.
-
 > [!NOTE]
 > If a segment does not show a SPLITTER copy button, than splitting is not possible by that segment.
+
+The easiest way to get the splitter configuration is to click on the copy button under SPLITTER that has the full splitter JSON pre-configured.
 
 ![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/splitter.png)
 
