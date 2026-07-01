@@ -247,15 +247,14 @@ To download a model in either EdiNation Spec Library or EdiNation Spec Builder,
 select the model first, then in the JSON view 
 select the Download button in the top right corner.
 
-![Test](https://github.com/EdiFabric/native-csharp-examples/blob/main/model.png)
+![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/model.png)
 
 Choose to download as **ediFabric Native**.
 
-### ParseConfig (`parse` / `start_split`)
+### ParseConfig (`parse`)
 
 ```json
 {
-  "split":    { "segment_id": "ST", "segment_depth": 0, "loop_id": null },
   "validate": { "regex": null, "date_format": null, "time_format": null,
                 "skip_seq_count": false, "skip_hl_seq": false,
                 "snip_level": 0, "max_errors": 0 },
@@ -264,11 +263,39 @@ Choose to download as **ediFabric Native**.
 }
 ```
 
-- `split` — required for `start_split`; `segment_id` is the boundary (usually `ST`).
 - `validate` — applied when `mode ≥ 2`; `snip_level` is `1`–`4`.
 - `ack` — applied when `mode == 3`.
 
 All sections are optional for `parse`.
+
+### SplitConfig (`start_split`)
+
+```json
+{
+  "split":    { "segment_id": "ST", "segment_depth": 0, "loop_id": null }
+}
+```
+
+- `split` — required for `start_split`.
+
+Splitting is possible for the following boundaries:
+
+- Transaction - for files that contain batches of transactions.
+- Repeating loop - for files that contain batches of loops, such as order lines, claims or benefit enrollments.
+
+The splitter must be configured as follows:
+
+- `segment_id`  — the name of the segment to split by. It must be either ST or the first segment in the repeatable loop (Mandatory).
+- `segment_depth` — the depth of the segment in the model hierarchy (Mandatory).
+- `loop_id` — the name of the loop for the segment specified in segment_id (Optional).
+
+The values for the splitter can be found in EdiNation by loading a sample file. For example, if you want to split by loop 2000A in 837P, load an 837P file in EdiNation (or use the example one), click on the first segment in that loop, e.g., HL. `segment_id` is CODE,  `loop_id` is the last item in PATH, and `segment_depth` is DEPTH.
+
+The easiest way to get the splitter configuration is to click on the copy button under SPLITTER that has the full splitter JSON pre-configured.
+
+NOTE: If a segment does not show a SPLITTER copy button, than splitting is not possible by that segment.
+
+![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/splitter.png)
 
 ---
 
