@@ -7,6 +7,7 @@ language with a C foreign-function interface** (C, C++, Rust, Go, Python, Node.j
 Java/JNA, .NET, …). No .NET runtime, JVM, or other dependency is required on the
 target machine.
 
+- **Safe** — all operations are local and your data never leaves the process the library is executed in.
 - **Fast** — native code, zero-copy UTF‑8 buffers, streaming split/merge.
 - **Portable** — a single native library per platform, no runtime install.
 - **Simple ABI** — a handful of C entry points returning integer status codes.
