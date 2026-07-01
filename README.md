@@ -402,6 +402,8 @@ def parse(edi: bytes, mode: int = 1) -> str:
 
 ### .NET (P/Invoke)
 
+The C# examples provide a managed wrapper [`X12Client`](https://github.com/EdiFabric/native-csharp-examples/blob/main/x12/X12Client.cs) around the edifabric-x12-tools native AOT DLL.
+
 ```csharp
 [DllImport("edifabric-x12-tools", EntryPoint = "parse")]
 static extern unsafe int Parse(byte* input, int inputLen, int mode,
