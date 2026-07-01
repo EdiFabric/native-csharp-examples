@@ -46,7 +46,7 @@ The distribution contains one native library per platform:
 | Linux    | `edifabric-x12-tools.so`      |
 | macOS    | `edifabric-x12-tools.dylib`   |
 
-[Download **ediFabric Native**](https://www.edifabric.com/)
+[Download **ediFabric Native**](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download)
 
 Plus your **model files** (per transaction set) and a **map file** that tells the
 engine where to find them. See [Configuration JSON](#configuration-json) for details.
@@ -63,10 +63,11 @@ engine where to find them. See [Configuration JSON](#configuration-json) for det
 
 ## Quick start
 
-1. **Load the library** with your language's FFI.
-2. **Authorize** with a token or serial (see [Licensing](#licensing)).
-3. **Load the model map** once with `set_map`.
-4. **Parse** EDI to JSON with `parse` (or stream with `start_split` / `split`).
+1. **Download the library** from [here](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download).
+2. **Load the library** with your language's FFI.
+3. **Authorize** with a token or serial (see [Licensing](#licensing)).
+4. **Load the model map** once with `set_map`.
+5. **Parse** EDI to JSON with `parse` (or stream with `start_split` / `split`).
 
 ```text
 set_token(token)          // or set_serial(serial)
