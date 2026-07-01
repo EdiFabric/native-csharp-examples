@@ -85,7 +85,7 @@ All strings and payloads cross the boundary as **UTF‑8 byte buffers**
 
 A license is validated during parse/build operations. Choose one of two models:
 
-### Token (recommended — offline, high throughput)
+### Token (recommended — offline, high throughput, NOT available for free or developer license types)
 
 ```text
 get_token(serial)  → token      // one-time, requires internet; store the token
@@ -223,7 +223,7 @@ All JSON uses **`snake_case`** keys and is case-insensitive.
 
 ### Template map (`set_map`)
 
-Map keys are `message:version` (lower-cased). `type: 1` loads the model
+Map keys are `message:version`. `type: 1` loads the model
 from a local file at `location/name`. Set `default` to fall back to the online
 service for unmapped transaction sets.
 
@@ -231,11 +231,16 @@ service for unmapped transaction sets.
 {
   "default": null,
   "maps": {
-    "837:005010x222a1": { "type": 1, "name": "837P.json", "location": "/opt/models" },
-    "834:005010x220a1": { "type": 1, "name": "834.json",  "location": "/opt/models" }
+    "837:005010X222A1": { "type": 1, "name": "837P.json", "location": "/opt/models" },
+    "834:005010X220A1": { "type": 1, "name": "834.json",  "location": "/opt/models" }
   }
 }
 ```
+### Models
+
+All X12 transactions, such as 837P, 834, 850, etc. are represented as proprietary JSON. Download a standard model from [EdiNation Spec Library](https://edination.edifabric.com/edi-spec-library.html), or a custom model from [EdiNation Spec Builder](https://edination.edifabric.com/edi-spec-builder.html). You create/modify models in OpenEDI format, upload them in EdiNation Spec Builder and download them as JSON for use in ediFabric Native.
+
+To download a model in either EdiNation Spec Library or EdiNation Spec Builder, select the model first, then in the JSON view select the Download button in the top right corner:
 
 ### ParseConfig (`parse` / `start_split`)
 
