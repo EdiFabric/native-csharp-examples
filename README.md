@@ -34,7 +34,6 @@ target machine.
 - [Language bindings](#language-bindings)
 - [Support](#support)
 
----
 
 ## Package
 
