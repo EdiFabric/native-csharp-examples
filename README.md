@@ -7,12 +7,10 @@ language with a C foreign-function interface** (C, C++, Rust, Go, Python, Node.j
 Java/JNA, .NET, …). No .NET runtime, JVM, or other dependency is required on the
 target machine.
 
+- **Safe** — all operations run locally, and your data never leaves the process where the library is executed
 - **Fast** — native code, zero-copy UTF‑8 buffers, streaming split/merge.
 - **Portable** — a single native library per platform, no runtime install.
 - **Simple ABI** — a handful of C entry points returning integer status codes.
-
-Copyright © EdiFabric 2026. Use of this library requires a valid license
-(see [Licensing](#licensing)).
 
 ---
 
@@ -21,6 +19,7 @@ Copyright © EdiFabric 2026. Use of this library requires a valid license
 - [Package](#package)
 - [Requirements](#requirements)
 - [Quick start](#quick-start)
+- [Examples](#examples)
 - [Licensing](#licensing)
 - [API reference](#api-reference)
   - [Model](#model)
@@ -49,8 +48,10 @@ The distribution contains one native library per platform:
 | Linux    | `edifabric-x12-tools.so`      |
 | macOS    | `edifabric-x12-tools.dylib`   |
 
+[Download **ediFabric Native**](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download)
+
 Plus your **model files** (per transaction set) and a **map file** that tells the
-engine where to find them.
+engine where to find them. See [Configuration JSON](#configuration-json) for details.
 
 ---
 
@@ -64,10 +65,11 @@ engine where to find them.
 
 ## Quick start
 
-1. **Load the library** with your language's FFI.
-2. **Authorize** with a token or serial (see [Licensing](#licensing)).
-3. **Load the model map** once with `set_map`.
-4. **Parse** EDI to JSON with `parse` (or stream with `start_split` / `split`).
+1. **Download the library** from [here](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download).
+2. **Load the library** with your language's FFI.
+3. **Authorize** with a token or serial (see [Licensing](#licensing)).
+4. **Load the model map** once with `set_map`.
+5. **Parse** EDI to JSON with `parse` (or stream with `start_split` / `split`).
 
 ```text
 set_token(token)          // or set_serial(serial)
@@ -81,11 +83,29 @@ All strings and payloads cross the boundary as **UTF‑8 byte buffers**
 
 ---
 
+## Examples
+
+1. [**Parse X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Parse_X12_Files.cs).
+2. [**Validate X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Validate_X12_Files.cs).
+3. [**Generate X12 Acknowledgments**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Generate_X12_Acknowledgments.cs).
+4. [**Create X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Create_X12_Files.cs).
+
+---
+
 ## Licensing
+
+> [!NOTE]
+> The examples are available with a free plan which can be used only with Serial model validation. 
+> You don't need to call `install_license` with the free plan, and the only licensing call must be `set_serial`.
+
+The serial key for the free plan is:
+```
+bd96a836feca45cb91c86ee65d281f52
+```
 
 A license is validated during parse/build operations. Choose one of two models:
 
-### Token (recommended — offline, high throughput, NOT available for free or developer license types)
+### Token (recommended — offline, high throughput
 
 ```text
 get_token(serial)  → token      // one-time, requires internet; store the token
@@ -126,6 +146,9 @@ Conventions used by every function:
   returns `1` (`InsufficientCapacity`) and writes the required size into the
   length out-parameter; reallocate and call again.
 - Exceptions never cross the boundary.
+
+> [!NOTE]
+> The C# examples provide a managed wrapper [`X12Client`](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/X12Client.cs) around the edifabric-x12-tools native DLL.
 
 ### Model
 
@@ -238,15 +261,23 @@ service for unmapped transaction sets.
 ```
 ### Models
 
-All X12 transactions, such as 837P, 834, 850, etc. are represented as proprietary JSON. Download a standard model from [EdiNation Spec Library](https://edination.edifabric.com/edi-spec-library.html), or a custom model from [EdiNation Spec Builder](https://edination.edifabric.com/edi-spec-builder.html). You create/modify models in OpenEDI format, upload them in EdiNation Spec Builder and download them as JSON for use in ediFabric Native.
+All X12 transactions, such as 837P, 834, 850, etc. are represented as proprietary JSON. 
+Download a standard model from [EdiNation Spec Library](https://edination.edifabric.com/edi-spec-library.html), 
+or a custom model from [EdiNation Spec Builder](https://edination.edifabric.com/edi-spec-builder.html). 
+Create/modify models in OpenEDI format, upload them in EdiNation Spec Builder and download them as JSON for use in ediFabric Native.
 
-To download a model in either EdiNation Spec Library or EdiNation Spec Builder, select the model first, then in the JSON view select the Download button in the top right corner:
+To download a model in either EdiNation Spec Library or EdiNation Spec Builder, 
+select the model first, then in the JSON view 
+select the Download button in the top right corner.
 
-### ParseConfig (`parse` / `start_split`)
+![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/model.png)
+
+Choose to download as **ediFabric Native**.
+
+### ParseConfig (`parse`)
 
 ```json
 {
-  "split":    { "segment_id": "ST", "segment_depth": 0, "loop_id": null },
   "validate": { "regex": null, "date_format": null, "time_format": null,
                 "skip_seq_count": false, "skip_hl_seq": false,
                 "snip_level": 0, "max_errors": 0 },
@@ -255,11 +286,40 @@ To download a model in either EdiNation Spec Library or EdiNation Spec Builder, 
 }
 ```
 
-- `split` — required for `start_split`; `segment_id` is the boundary (usually `ST`).
 - `validate` — applied when `mode ≥ 2`; `snip_level` is `1`–`4`.
 - `ack` — applied when `mode == 3`.
 
 All sections are optional for `parse`.
+
+### SplitConfig (`start_split`)
+
+```json
+{
+  "split":    { "segment_id": "ST", "segment_depth": 0, "loop_id": null }
+}
+```
+
+- `split` — required for `start_split`.
+
+Splitting is possible for the following boundaries:
+
+- Transaction - for files that contain batches of transactions.
+- Repeating loop - for files that contain batches of loops, such as order lines, claims or benefit enrollments.
+
+The splitter must be configured as follows:
+
+- `segment_id`  — the name of the segment to split by. It must be either ST or the first segment in the repeatable loop (Mandatory).
+- `segment_depth` — the depth of the segment in the model hierarchy (Mandatory).
+- `loop_id` — the name of the loop for the segment specified in segment_id (Optional).
+
+The values for the splitter can be found in EdiNation by loading a sample file. For example, if you want to split by loop 2000A in 837P, load an 837P file in EdiNation (or use the example one), click on the first segment in that loop, e.g., HL. `segment_id` is **CODE**,  `loop_id` is the last item in **PATH**, and `segment_depth` is **DEPTH**.
+
+> [!NOTE]
+> If a segment does not show a SPLITTER copy button, than splitting is not possible by that segment.
+
+The easiest way to get the splitter configuration is to click on the copy button under SPLITTER that has the full splitter JSON pre-configured.
+
+![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/splitter.png)
 
 ---
 
@@ -354,6 +414,9 @@ def parse(edi: bytes, mode: int = 1) -> str:
 ```
 
 ### .NET (P/Invoke)
+
+> [!NOTE]
+> The C# examples provide a managed wrapper [`X12Client`](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/X12Client.cs) around the edifabric-x12-tools native DLL.
 
 ```csharp
 [DllImport("edifabric-x12-tools", EntryPoint = "parse")]
