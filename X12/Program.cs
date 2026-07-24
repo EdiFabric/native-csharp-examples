@@ -73,7 +73,7 @@ void Run(string label, Action test)
 {
     try
     {
-        X12Client.SetToken(X12Client.GetToken(Examples.serialKey));
+        X12Client.SetSerial(Examples.serialKey);
         test();
         Ok(label);
     }
