@@ -65,7 +65,7 @@ engine where to find them. See [Configuration JSON](#configuration-json) for det
 
 ## Quick start
 
-1. **Download the library** from [here](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download).
+1. **Download the library** from [here](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download). Drop it to the same folder as your executable (or different folder - configure the path in the bindings).
 2. **Load the library** with your language's FFI.
 3. **Authorize** with a token or serial (see [Licensing](#licensing)).
 4. **Load the model map** once with `set_map`.
