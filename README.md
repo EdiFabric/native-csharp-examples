@@ -1,6 +1,12 @@
 # ediFabric Native X12 — C# bindings
 
-C# P/Invoke bindings for [ediFabric Native](https://www.edifabric.com/edifabric-native.html), a self-contained EDI X12 engine compiled ahead of time to a native shared library. Parse X12 to JSON, validate, acknowledge, split, merge, and build EDI back — with no NuGet dependencies and no EDI engine to install.
+**ediFabric Native** is a self-contained, high-performance X12 EDI native shared library. It converts X12 EDI to JSON (and back),
+validates transaction sets, and generates acknowledgments — callable from **any
+language with a C foreign-function interface** (C, C++, Rust, Go, Python, Node.js,
+Java/JNA, .NET, …). No .NET runtime, JVM, or other dependency is required on the
+target machine.
+
+C# P/Invoke bindings for [ediFabric Native](https://www.edifabric.com/edifabric-native.html).
 
 | File | Purpose |
 | --- | --- |
@@ -11,7 +17,7 @@ C# P/Invoke bindings for [ediFabric Native](https://www.edifabric.com/edifabric-
 
 ## Requirements
 
-- .NET 8.0 SDK or later
+- .NET 10.0 SDK or later
 - 64-bit Windows, Linux, or macOS
 - The native library for your platform:
 
@@ -21,10 +27,14 @@ C# P/Invoke bindings for [ediFabric Native](https://www.edifabric.com/edifabric-
 | Linux | `edifabric-x12-tools.so` |
 | macOS | `edifabric-x12-tools.dylib` |
 
-- Internet access for the one-time license install and for token retrieval
+[Download **ediFabric Native** Library](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download)
+
+Plus your **model files** (per transaction set) and a **map file** that tells the
+engine where to find them. See [Model map](#model-map) for details.
 
 ## Getting started
 
+**Download the library** from [here](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download).
 Put the native library in the repository root, then run the walkthrough:
 
 ```bash
@@ -58,6 +68,10 @@ directory and a few levels above it, before falling back to the default .NET
 probing logic. The serial comes from `--serial`, then `EDIFABRIC_SERIAL`, then
 the built-in free plan serial.
 
+All strings and payloads cross the boundary as **UTF‑8 byte buffers**
+(`pointer + length`). Every function returns `0` on success or a non-zero
+[error code](#error-codes).
+
 ## Usage
 
 Copy `NativeMethods.cs` and `EdiFabricX12.cs` into your project and enable unsafe
@@ -75,10 +89,10 @@ using EdiFabric.Native.X12;
 const string serial = "your-serial";
 
 EdiFabricX12.Load();                    // optional, any call loads on demand
-EdiFabricX12.SetSerial(serial);         // or SetToken(token) for offline use
+EdiFabricX12.SetSerial(serial);         // or SetToken(token) for offline use (only available for the Enterprise license)
 EdiFabricX12.SetMap($$"""{"default": "{{serial}}", "maps": {}}""");
 
-var edi = File.ReadAllBytes("purchase-order.edi");
+var edi = File.ReadAllBytes("837p.txt");
 var result = EdiFabricX12.Parse(edi);
 Console.WriteLine(result.Transactions);
 ```
@@ -116,7 +130,7 @@ Console.WriteLine(report.RootElement.GetProperty("errors_count").GetInt32());
 flat memory use. `segment_id` must be `ST` or the first segment of a repeating loop.
 
 ```csharp
-var config = """{ "split": { "segment_id": "ST", "segment_depth": 0, "loop_id": null } }""";
+var config = """{ "split": { "segment_id": "LX", "segment_depth": 6, "loop_id": "2400" } }""";
 
 foreach (var part in EdiFabricX12.EnumerateSplit(edi, ParseMode.Json, config))
     Handle(Encoding.UTF8.GetString(part.Payload));
@@ -144,6 +158,15 @@ var edi = EdiFabricX12.Build(result.Transactions, postfix: "\r\n");   // null fo
 
 ## API reference
 
+Conventions used by every function:
+
+- Returns `int`: `0` = success, non-zero = [error code](#error-codes).
+- Inputs are UTF‑8 `byte*` + `int length`.
+- Output functions use **grow-and-retry**: if the buffer is too small the call
+  returns `1` (`InsufficientCapacity`) and writes the required size into the
+  length out-parameter; reallocate and call again.
+- Exceptions never cross the boundary.
+
 Every wrapper throws `EdiFabricException` when the native call returns a
 non-zero status. Buffer growth (`InsufficientCapacity`) is retried automatically.
 
@@ -163,6 +186,15 @@ non-zero status. Buffer growth (`InsufficientCapacity`) is retried automatically
 do not export `free_error` fall back to `Marshal.FreeHGlobal`.
 
 ## Licensing
+
+> [!NOTE]
+> The examples are available with a free plan which can be used only with Serial model validation. 
+> You don't need to call `install_license` with the free plan, and the only licensing call must be `set_serial`.
+
+The serial key for the free plan is:
+```
+bd96a836feca45cb91c86ee65d281f52
+```
 
 Two models are supported. Tokens are recommended for containers, air-gapped
 machines, and high volume; serials are simplest when always online.
@@ -196,8 +228,69 @@ sets through the online spec service, or leave it `null` and map everything loca
 }
 ```
 
-Download models in ediFabric Native format from the EdiNation Spec Library, or
-build custom ones in the EdiNation Spec Builder.
+All X12 transactions, such as 837P, 834, 850, etc. are represented as proprietary JSON. 
+Download a standard model from [EdiNation Spec Library](https://edination.edifabric.com/edi-spec-library.html), 
+or a custom model from [EdiNation Spec Builder](https://edination.edifabric.com/edi-spec-builder.html). 
+Create/modify models in OpenEDI format, upload them in EdiNation Spec Builder and download them as JSON for use in ediFabric Native.
+
+To download a model in either EdiNation Spec Library or EdiNation Spec Builder, 
+select the model first, then in the JSON view 
+select the Download button in the top right corner.
+
+![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/model.png)
+
+Choose to download as **ediFabric Native**.
+
+## Configuration JSON
+
+All JSON uses **`snake_case`** keys and is case-insensitive.
+
+### ParseConfig (`parse`)
+
+```json
+{
+  "validate": { "regex": null, "date_format": null, "time_format": null,
+                "skip_seq_count": false, "skip_hl_seq": false,
+                "snip_level": 0, "max_errors": 0 },
+  "ack":      { "supress_ta1": false, "ak901p": false,
+                "gen_for_valid": false, "gen997": false }
+}
+```
+
+- `validate` — applied when `mode ≥ 2`; `snip_level` is `1`–`4`.
+- `ack` — applied when `mode == 3`.
+
+All sections are optional for `parse`.
+
+### SplitConfig (`start_split`)
+
+```json
+{
+  "split":    { "segment_id": "ST", "segment_depth": 0, "loop_id": null }
+}
+```
+
+- `split` — required for `start_split`.
+
+Splitting is possible for the following boundaries:
+
+- Transaction - for files that contain batches of transactions.
+- Repeating loop - for files that contain batches of loops, such as order lines, claims or benefit enrollments.
+
+The splitter must be configured as follows:
+
+- `segment_id`  — the name of the segment to split by. It must be either ST or the first segment in the repeatable loop (Mandatory).
+- `segment_depth` — the depth of the segment in the model hierarchy (Mandatory).
+- `loop_id` — the name of the loop for the segment specified in segment_id (Optional).
+
+The values for the splitter can be found in EdiNation by loading a sample file. For example, if you want to split by loop 2000A in 837P, load an 837P file in EdiNation (or use the example one), click on the first segment in that loop, e.g., HL. `segment_id` is **CODE**,  `loop_id` is the last item in **PATH**, and `segment_depth` is **DEPTH**.
+
+> [!NOTE]
+> If a segment does not show a SPLITTER copy button, than splitting is not possible by that segment.
+
+The easiest way to get the splitter configuration is to click on the copy button under SPLITTER that has the full splitter JSON pre-configured.
+
+![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/splitter.png)
 
 ## Threading
 
@@ -213,6 +306,9 @@ are exposed as `EdiFabricErrorCode`, and `GetError(code)` returns the message.
 
 | Code | Meaning |
 | --- | --- |
+| 501 | Unknown |
+| 502 | No internet access to the authentication API |
+| 503 | Local map file has invalid paths or file names |
 | 611 | Incorrect or empty input |
 | 612 | Logger initialization failed |
 | 613 | Map JSON could not be deserialized |
