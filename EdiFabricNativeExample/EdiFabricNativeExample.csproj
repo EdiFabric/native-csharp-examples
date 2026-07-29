@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>EdiFabric.Native.Example</RootNamespace>
+    <AssemblyName>EdiFabricNativeExample</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Copy the native library next to the executable when it sits in the repository root. -->
+  <ItemGroup>
+    <None Include="..\..\edifabric-x12-tools.dll" Condition="Exists('..\..\edifabric-x12-tools.dll')" Link="edifabric-x12-tools.dll" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\edifabric-x12-tools.so" Condition="Exists('..\..\edifabric-x12-tools.so')" Link="edifabric-x12-tools.so" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\edifabric-x12-tools.dylib" Condition="Exists('..\..\edifabric-x12-tools.dylib')" Link="edifabric-x12-tools.dylib" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="edi\" />
+    <Folder Include="map\" />
+  </ItemGroup>
+
+</Project>
