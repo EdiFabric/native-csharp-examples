@@ -1,437 +1,259 @@
-# ediFabric Native C# Examples
+# ediFabric Native X12 — C# bindings
 
-**ediFabric Native** is a self-contained, high-performance X12 EDI native shared library. It converts X12 EDI to JSON (and back),
-validates transaction sets, and generates acknowledgments — callable from **any
-language with a C foreign-function interface** (C, C++, Rust, Go, Python, Node.js,
-Java/JNA, .NET, …). No .NET runtime, JVM, or other dependency is required on the
-target machine.
+C# P/Invoke bindings for [ediFabric Native](https://www.edifabric.com/edifabric-native.html), a self-contained EDI X12 engine compiled ahead of time to a native shared library. Parse X12 to JSON, validate, acknowledge, split, merge, and build EDI back — with no NuGet dependencies and no EDI engine to install.
 
-- **Safe** — all operations run locally, and your data never leaves the process where the library is executed
-- **Fast** — native code, zero-copy UTF‑8 buffers, streaming split/merge.
-- **Portable** — a single native library per platform, no runtime install.
-- **Simple ABI** — a handful of C entry points returning integer status codes.
-
----
-
-## Contents
-
-- [Package](#package)
-- [Requirements](#requirements)
-- [Quick start](#quick-start)
-- [Examples](#examples)
-- [Licensing](#licensing)
-- [API reference](#api-reference)
-  - [Model](#model)
-  - [Parse](#parse)
-  - [Split (streaming)](#split-streaming)
-  - [Build](#build)
-  - [Merge (streaming)](#merge-streaming)
-  - [Results & errors](#results--errors)
-  - [Logging & lifecycle](#logging--lifecycle)
-- [Operation modes](#operation-modes)
-- [Configuration JSON](#configuration-json)
-- [Error codes](#error-codes)
-- [Threading model](#threading-model)
-- [Language bindings](#language-bindings)
-- [Support](#support)
-
----
-
-## Package
-
-The distribution contains one native library per platform:
-
-| Platform | File                          |
-|----------|-------------------------------|
-| Windows  | `edifabric-x12-tools.dll`     |
-| Linux    | `edifabric-x12-tools.so`      |
-| macOS    | `edifabric-x12-tools.dylib`   |
-
-[Download **ediFabric Native**](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download)
-
-Plus your **model files** (per transaction set) and a **map file** that tells the
-engine where to find them. See [Configuration JSON](#configuration-json) for details.
-
----
+| File | Purpose |
+| --- | --- |
+| `EdiFabricNativeExample/NativeMethods.cs` | `DllImport` declarations mirroring the C header |
+| `EdiFabricNativeExample/EdiFabricX12.cs` | managed API over those declarations |
+| `EdiFabricNativeExample/Program.cs` | runnable walkthrough of every entry point |
+| `../c-abi-edifabric_x12_tools.h` | the C header these bindings mirror |
 
 ## Requirements
 
-- A supported 64-bit OS (Windows / Linux / macOS).
-- Internet access **only** for one-time license installation / token retrieval.
-- No .NET runtime — the library is fully self-contained.
+- .NET 8.0 SDK or later
+- 64-bit Windows, Linux, or macOS
+- The native library for your platform:
 
----
+| Platform | File |
+| --- | --- |
+| Windows | `edifabric-x12-tools.dll` |
+| Linux | `edifabric-x12-tools.so` |
+| macOS | `edifabric-x12-tools.dylib` |
 
-## Quick start
+- Internet access for the one-time license install and for token retrieval
 
-1. **Download the library** from [here](https://support.edifabric.com/hc/en-us/articles/37289848931869-Download). Drop it to the same folder as your executable (or different folder - configure the path in the bindings).
-2. **Load the library** with your language's FFI.
-3. **Authorize** with a token or serial (see [Licensing](#licensing)).
-4. **Load the model map** once with `set_map`.
-5. **Parse** EDI to JSON with `parse` (or stream with `start_split` / `split`).
+## Getting started
 
-```text
-set_token(token)          // or set_serial(serial)
-set_map(mapJson)          // once
-parse(edi, mode=1, …)     // EDI → JSON
+Put the native library in the repository root, then run the walkthrough:
+
+```bash
+cd EdiFabricNativeExample
+dotnet run
 ```
 
-All strings and payloads cross the boundary as **UTF‑8 byte buffers**
-(`pointer + length`). Every function returns `0` on success or a non-zero
-[error code](#error-codes).
+The project copies the library next to the executable on build. It authorizes with
+the free plan serial, loads the model map, and calls every function in the ABI,
+printing what each one returns.
 
----
-
-## Examples
-
-1. [**Parse X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Parse_X12_Files.cs).
-2. [**Validate X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Validate_X12_Files.cs).
-3. [**Generate X12 Acknowledgments**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Generate_X12_Acknowledgments.cs).
-4. [**Create X12 files**](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/Examples/Create_X12_Files.cs).
-
----
-
-## Licensing
-
-> [!NOTE]
-> The examples are available with a free plan which can be used only with Serial model validation. 
-> You don't need to call `install_license` with the free plan, and the only licensing call must be `set_serial`.
-
-The serial key for the free plan is:
 ```
-bd96a836feca45cb91c86ee65d281f52
+======================================================================
+Parse: parse (mode 2, JSON + validation report)
+======================================================================
+  1754 bytes total, validation starts at offset 1708
+  validation -> {"errors":[],"errors_count":0,"data_count":10}
 ```
 
-A license is validated during parse/build operations. Choose one of two models:
+Options:
 
-### Token (recommended — offline, high throughput
-
-```text
-get_token(serial)  → token      // one-time, requires internet; store the token
-set_token(token)                // per process start; validated cryptographically
+```bash
+dotnet run -- --serial YOUR_SERIAL     # use your own license
+dotnet run -- --lib /opt/edifabric     # library file or the folder holding it
+dotnet run -- --skip-network           # authorize with set_serial only
 ```
 
-Tokens expire — query `get_token_expiration` and refresh with `get_token` as needed.
+The library is resolved through a `DllImportResolver` that tries
+`EdiFabricX12.LibraryPath`, then `EDIFABRIC_X12_LIB`, then the application
+directory and a few levels above it, before falling back to the default .NET
+probing logic. The serial comes from `--serial`, then `EDIFABRIC_SERIAL`, then
+the built-in free plan serial.
 
-### Serial (online — validates against the license server per operation)
+## Usage
 
-```text
-install_license(serial)         // one-time per machine, requires internet
-set_serial(serial)              // per process start
+Copy `NativeMethods.cs` and `EdiFabricX12.cs` into your project and enable unsafe
+blocks:
+
+```xml
+<PropertyGroup>
+  <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+</PropertyGroup>
 ```
 
-Use **token** mode for containers, air-gapped, or high-volume scenarios;
-**serial** mode is simplest for low-volume, always-online use.
+```csharp
+using EdiFabric.Native.X12;
 
-| Entry point            | Signature                                                                 | Purpose |
-|------------------------|--------------------------------------------------------------------------|---------|
-| `install_license`      | `int install_license(byte* serial, int len)`                             | Register this machine (once, online). |
-| `get_token`            | `int get_token(byte* serial, int len, byte* out, int cap, int* outLen)`  | Fetch a signed token (grow-and-retry). |
-| `set_token`            | `int set_token(byte* token, int len)`                                    | Cache a token for this process. |
-| `validate_token`       | `int validate_token(byte* token, int len)`                               | Validate a token without caching. |
-| `get_token_expiration` | `int get_token_expiration(long* expUtc)`                                 | Token expiry (UTC ticks; `0` = none). |
-| `set_serial`           | `int set_serial(byte* serial, int len)`                                  | Cache a serial for runtime auth. |
-| `get_app_version`      | `int get_app_version(int* version)`                                      | Library application version. |
+const string serial = "your-serial";
 
----
+EdiFabricX12.Load();                    // optional, any call loads on demand
+EdiFabricX12.SetSerial(serial);         // or SetToken(token) for offline use
+EdiFabricX12.SetMap($$"""{"default": "{{serial}}", "maps": {}}""");
+
+var edi = File.ReadAllBytes("purchase-order.edi");
+var result = EdiFabricX12.Parse(edi);
+Console.WriteLine(result.Transactions);
+```
+
+`Parse` accepts a `string` or a `ReadOnlySpan<byte>`, so EDI read straight from
+disk needs no intermediate decoding.
+
+### Validation and acknowledgments
+
+`ParseResult` splits the native output for you: `Transactions` is the JSON, and
+`Report` is the validation and acknowledgment section that follows it.
+
+```csharp
+var config = """
+{
+  "validate": { "snip_level": 2, "max_errors": 0 },
+  "ack": { "gen997": false, "supress_ta1": false }
+}
+""";
+
+var result = EdiFabricX12.Parse(edi, ParseMode.JsonValidateAck, config);
+using var report = JsonDocument.Parse(result.Report);
+Console.WriteLine(report.RootElement.GetProperty("errors_count").GetInt32());
+```
+
+| Mode | Constant | Output |
+| --- | --- | --- |
+| 1 | `ParseMode.Json` | transaction-set JSON |
+| 2 | `ParseMode.JsonValidate` | JSON plus a validation report |
+| 3 | `ParseMode.JsonValidateAck` | JSON plus validation and a 999/997/TA1 acknowledgment |
+
+### Streaming large interchanges
+
+`EnumerateSplit` streams one transaction set (or repeating loop) at a time with
+flat memory use. `segment_id` must be `ST` or the first segment of a repeating loop.
+
+```csharp
+var config = """{ "split": { "segment_id": "ST", "segment_depth": 0, "loop_id": null } }""";
+
+foreach (var part in EdiFabricX12.EnumerateSplit(edi, ParseMode.Json, config))
+    Handle(Encoding.UTF8.GetString(part.Payload));
+```
+
+`EnumerateMerge` streams a full interchange JSON document back out one segment at a time:
+
+```csharp
+using var output = File.Create("out.edi");
+foreach (var segment in EdiFabricX12.EnumerateMerge(result.Transactions))
+{
+    output.Write(segment);
+    output.Write("\r\n"u8);
+}
+```
+
+Both wrap the underlying `StartSplit`/`Split`/`GetResult` and
+`StartMerge`/`Merge`/`GetResult` sequences, which you can also drive directly.
+
+### Building EDI
+
+```csharp
+var edi = EdiFabricX12.Build(result.Transactions, postfix: "\r\n");   // null for compact output
+```
 
 ## API reference
 
-Conventions used by every function:
+Every wrapper throws `EdiFabricException` when the native call returns a
+non-zero status. Buffer growth (`InsufficientCapacity`) is retried automatically.
 
-- Returns `int`: `0` = success, non-zero = [error code](#error-codes).
-- Inputs are UTF‑8 `byte*` + `int length`.
-- Output functions use **grow-and-retry**: if the buffer is too small the call
-  returns `1` (`InsufficientCapacity`) and writes the required size into the
-  length out-parameter; reallocate and call again.
-- Exceptions never cross the boundary.
+| Group | Members |
+| --- | --- |
+| Loading | `Load`, `LibraryPath`, `ResolvedLibraryPath` |
+| Lifecycle | `InitLogger`, `ShutdownLogger`, `ClearCache` |
+| Licensing | `InstallLicense`, `GetAppVersion`, `GetToken`, `ValidateToken`, `SetToken`, `GetTokenExpiration`, `GetTokenExpirationTicks`, `SetSerial` |
+| Model map | `SetMap` |
+| Processing | `Parse`, `StartSplit`, `Split`, `Build`, `StartMerge`, `Merge`, `GetResult` |
+| Errors | `GetError`, `FreeError`, `Check` |
+| Wrappers | `EnumerateSplit`, `EnumerateMerge` |
+| Types | `ParseMode`, `LogLevel`, `EdiFabricErrorCode`, `EdiFabricException`, `ParseResult`, `SplitStep`, `SplitPart`, `EdiFabricX12.Raw` |
 
-> [!NOTE]
-> The C# examples provide a managed wrapper [`X12Client`](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/X12Client.cs) around the edifabric-x12-tools native DLL.
+`GetError` frees the native string for you. Use `EdiFabricX12.Raw.GetError` with
+`FreeError` only when you want to own the unmanaged memory yourself. Builds that
+do not export `free_error` fall back to `Marshal.FreeHGlobal`.
 
-### Model
+## Licensing
 
-```c
-int set_map(byte* map, int mapLength);
-```
-Loads the [template map](#template-map-set_map) that resolves EDI transaction sets
-to model files. **Call once before any parse/split.** Cached until replaced.
+Two models are supported. Tokens are recommended for containers, air-gapped
+machines, and high volume; serials are simplest when always online.
 
-### Parse
+```csharp
+// Token: fetch once with internet access, cache it, set it at process start
+var token = EdiFabricX12.GetToken(serial);
+EdiFabricX12.SetToken(token);
+Console.WriteLine(EdiFabricX12.GetTokenExpiration());   // DateTime, or null when unset
 
-```c
-int parse(byte* input, int inputLength,
-          int mode,
-          byte* config, int configLength,
-          byte* output, int outputCapacity,
-          int* outputLength, int* outputOffset);
-```
-Parses a whole interchange in one call.
-
-- `mode` — see [operation modes](#operation-modes).
-- `config` — optional [ParseConfig](#parseconfig-parse--start_split) JSON (`null` allowed).
-- Output = transaction-set JSON, followed by validation/ACK JSON when `mode ≥ 2`:
-  - `*outputOffset` = start of the errors/ACK section (`0` when `mode == 1`).
-  - `*outputLength` = total bytes written.
-
-### Split (streaming)
-
-```c
-int start_split(byte* input, int inputLength, int mode, byte* config, int configLength);
-int split(int* resultSize, int* resultOffset, byte* last);
-```
-Streams one transaction set at a time (low, flat memory use for large files).
-
-- `config` **must** include a [`split`](#parseconfig-parse--start_split) section with a `segment_id`.
-- Call `split` repeatedly; for each step with `*resultSize > 0`, fetch the payload
-  with [`get_result`](#results--errors). `*last == 1` marks the final result.
-
-### Build
-
-```c
-int build(byte* input, int inputLength,
-          void* postfix,
-          byte* output, int outputCapacity, int* outputLength);
-```
-Builds an X12 EDI string from transaction-set JSON. `postfix` is an optional
-null-terminated string appended after each segment terminator (e.g. `"\r\n"`);
-pass `null` for compact output. Grow-and-retry as with `parse`.
-
-### Merge (streaming)
-
-```c
-int start_merge(byte* input, int inputLength);
-int merge(int* resultSize);
-```
-Streams X12 segments from a full interchange JSON document. Each `merge` returns
-one segment (fetch with `get_result`); `*resultSize == 0` ends the stream.
-
-### Results & errors
-
-```c
-int    get_result(byte* buffer, int bufferSize);   // copy the last split/merge result
-void*  get_error(int errorCode);                    // null-terminated message string
-```
-- `get_result` — `bufferSize` **must equal** the `resultSize` returned by the
-  preceding `split`/`merge` call. The internal buffer is consumed on success.
-- `get_error` — returns a human-readable message. **The caller must free the
-  returned string** (`free` / `Marshal.FreeHGlobal`).
-
-### Logging & lifecycle
-
-```c
-int init_logger(byte* pathUtf8, int pathLen, int minLevel);  // 0=Trace..4=Error
-int shutdown_logger();
-int clear_cache();   // reset model, split/merge state, results, license, logger
+// Serial: register the machine once, then authorize per process
+EdiFabricX12.InstallLicense(serial);
+EdiFabricX12.SetSerial(serial);
 ```
 
----
+The example caches its token in `.edifabric-token` next to the executable.
 
-## Operation modes
+## Model map
 
-| `mode` | Output                                            |
-|-------:|---------------------------------------------------|
-| `1`    | JSON only                                          |
-| `2`    | JSON + validation error report                     |
-| `3`    | JSON + validation report + acknowledgment (999/997/TA1) |
-
-Any other value returns `IncorrectMode` (`616`).
-
----
-
-## Configuration JSON
-
-All JSON uses **`snake_case`** keys and is case-insensitive.
-
-### Template map (`set_map`)
-
-Map keys are `message:version`. `type: 1` loads the model
-from a local file at `location/name`. Set `default` to fall back to the online
-service for unmapped transaction sets.
+`SetMap` tells the engine where to find transaction-set models. Keys are
+`message:version`. Set `default` to your serial to resolve unmapped transaction
+sets through the online spec service, or leave it `null` and map everything locally.
 
 ```json
 {
   "default": null,
   "maps": {
     "837:005010X222A1": { "type": 1, "name": "837P.json", "location": "/opt/models" },
-    "834:005010X220A1": { "type": 1, "name": "834.json",  "location": "/opt/models" }
+    "850:005010":       { "type": 1, "name": "850.json",  "location": "/opt/models" }
   }
 }
 ```
-### Models
 
-All X12 transactions, such as 837P, 834, 850, etc. are represented as proprietary JSON. 
-Download a standard model from [EdiNation Spec Library](https://edination.edifabric.com/edi-spec-library.html), 
-or a custom model from [EdiNation Spec Builder](https://edination.edifabric.com/edi-spec-builder.html). 
-Create/modify models in OpenEDI format, upload them in EdiNation Spec Builder and download them as JSON for use in ediFabric Native.
+Download models in ediFabric Native format from the EdiNation Spec Library, or
+build custom ones in the EdiNation Spec Builder.
 
-To download a model in either EdiNation Spec Library or EdiNation Spec Builder, 
-select the model first, then in the JSON view 
-select the Download button in the top right corner.
+## Threading
 
-![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/model.png)
-
-Choose to download as **ediFabric Native**.
-
-### ParseConfig (`parse`)
-
-```json
-{
-  "validate": { "regex": null, "date_format": null, "time_format": null,
-                "skip_seq_count": false, "skip_hl_seq": false,
-                "snip_level": 0, "max_errors": 0 },
-  "ack":      { "supress_ta1": false, "ak901p": false,
-                "gen_for_valid": false, "gen997": false }
-}
-```
-
-- `validate` — applied when `mode ≥ 2`; `snip_level` is `1`–`4`.
-- `ack` — applied when `mode == 3`.
-
-All sections are optional for `parse`.
-
-### SplitConfig (`start_split`)
-
-```json
-{
-  "split":    { "segment_id": "ST", "segment_depth": 0, "loop_id": null }
-}
-```
-
-- `split` — required for `start_split`.
-
-Splitting is possible for the following boundaries:
-
-- Transaction - for files that contain batches of transactions.
-- Repeating loop - for files that contain batches of loops, such as order lines, claims or benefit enrollments.
-
-The splitter must be configured as follows:
-
-- `segment_id`  — the name of the segment to split by. It must be either ST or the first segment in the repeatable loop (Mandatory).
-- `segment_depth` — the depth of the segment in the model hierarchy (Mandatory).
-- `loop_id` — the name of the loop for the segment specified in segment_id (Optional).
-
-The values for the splitter can be found in EdiNation by loading a sample file. For example, if you want to split by loop 2000A in 837P, load an 837P file in EdiNation (or use the example one), click on the first segment in that loop, e.g., HL. `segment_id` is **CODE**,  `loop_id` is the last item in **PATH**, and `segment_depth` is **DEPTH**.
-
-> [!NOTE]
-> If a segment does not show a SPLITTER copy button, than splitting is not possible by that segment.
-
-The easiest way to get the splitter configuration is to click on the copy button under SPLITTER that has the full splitter JSON pre-configured.
-
-![Model Img](https://github.com/EdiFabric/native-csharp-examples/blob/main/splitter.png)
-
----
+The library holds process-global state (model map, active split reader, active
+merge writer, last result, license) behind an internal lock. `Parse` and `Build`
+are independent per call, but each split or merge sequence must run to completion
+without another split or merge interleaving from a different thread.
 
 ## Error codes
 
-`0` = success. Envelope/segment/element codes originate from the validation
-engine; the library-level codes are:
+`0` is success and `1` means the output buffer was too small. Library-level codes
+are exposed as `EdiFabricErrorCode`, and `GetError(code)` returns the message.
 
 | Code | Meaning |
-|-----:|---------|
-| `1`  | Output buffer too small — retry with the returned required size. |
-| `611`| Incorrect/empty input. |
-| `612`| Logger initialization error. |
-| `613`| Map JSON deserialization failed. |
-| `614`| Incorrect (negative) output capacity. |
-| `615`| Model map not set (call `set_map` first). |
-| `616`| Incorrect mode (must be 1–3). |
-| `617`| No JSON produced. |
-| `618`| Validation result unavailable. |
-| `619`| Validation report serialization failed. |
-| `620`| Incorrect token. |
-| `621`| Config JSON deserialization failed. |
-| `622`| Split `segment_id` missing/empty. |
-| `623`| `split` called before `start_split`. |
-| `624`| No result available for `get_result`. |
-| `625`| `get_result` buffer size mismatch. |
-| `626`| `merge` called before `start_merge`. |
-| `627`| Incorrect/null output pointer. |
-| `628`| Incorrect serial. |
-| `629`| License not installed (run `install_license`). |
-| `630`| Application maximum version exceeded. |
-| `631`| Token expired. |
-| `632`| Token missing. |
-| `633`| Maximum licenses exceeded. |
-| `634`| License snapshot not found. |
-| `635`| License not set (call `set_token` or `set_serial`). |
+| --- | --- |
+| 611 | Incorrect or empty input |
+| 612 | Logger initialization failed |
+| 613 | Map JSON could not be deserialized |
+| 614 | Negative output capacity |
+| 615 | Model map not set, call `SetMap` first |
+| 616 | Mode must be 1, 2, or 3 |
+| 617 | No JSON produced |
+| 618 | Validation result unavailable |
+| 619 | Validation report serialization failed |
+| 620 | Incorrect token |
+| 621 | Config JSON could not be deserialized |
+| 622 | Split `segment_id` missing or empty |
+| 623 | `Split` called before `StartSplit` |
+| 624 | No result available for `GetResult` |
+| 625 | `GetResult` buffer size mismatch |
+| 626 | `Merge` called before `StartMerge` |
+| 627 | Incorrect or null output pointer |
+| 628 | Incorrect serial |
+| 629 | License not installed, run `InstallLicense` |
+| 630 | Application maximum version exceeded |
+| 631 | Token expired |
+| 632 | Token missing |
+| 633 | Maximum licenses exceeded |
+| 634 | License snapshot not found |
+| 635 | License not set, call `SetToken` or `SetSerial` |
 
-Call `get_error(code)` at runtime for the descriptive message.
+## Troubleshooting
 
----
+**`DllNotFoundException`** — the library is not on any searched path. Set
+`EdiFabricX12.LibraryPath` before the first call, or set `EDIFABRIC_X12_LIB`.
 
-## Threading model
+**Error 615 on parse** — call `SetMap` before parsing or splitting. `ClearCache`
+resets the map, so reload it afterwards.
 
-The library holds **process-global** state (loaded map, active split reader,
-active merge writer, last result, license) protected by an internal lock.
+**Error 635 on parse** — authorize first with `SetToken` or `SetSerial`.
 
-- `parse` and `build` are one-shot and independent per call.
-- `start_split`/`split`/`get_result` and `start_merge`/`merge`/`get_result` are
-  **stateful sequences**: run each sequence to completion without interleaving it
-  with another split/merge on another thread. Serialize these sequences in your
-  application.
+**Error 633 on install_license** — the plan's machine quota is used up. Switch to
+token authorization or contact support.
 
----
+## Links
 
-## Language bindings
-
-### C
-
-```c
-extern int  set_map(const unsigned char* map, int len);
-extern int  parse(const unsigned char* in, int inLen, int mode,
-                  const unsigned char* cfg, int cfgLen,
-                  unsigned char* out, int cap, int* outLen, int* outOff);
-extern void* get_error(int code);
-```
-
-### Python (ctypes)
-
-```python
-import ctypes, json
-
-lib = ctypes.CDLL("./edifabric-x12-tools.so")     # .dll / .dylib on other OSes
-lib.parse.restype = ctypes.c_int
-
-def set_map(map_json: str):
-    b = map_json.encode("utf-8")
-    if lib.set_map(b, len(b)) != 0:
-        raise RuntimeError("set_map failed")
-
-def parse(edi: bytes, mode: int = 1) -> str:
-    cap = len(edi) * 12
-    out_len = ctypes.c_int(0); out_off = ctypes.c_int(0)
-    while True:
-        out = ctypes.create_string_buffer(cap)
-        rc = lib.parse(edi, len(edi), mode, None, 0, out, cap,
-                       ctypes.byref(out_len), ctypes.byref(out_off))
-        if rc == 1:                     # InsufficientCapacity
-            cap = out_len.value; continue
-        if rc != 0:
-            raise RuntimeError(f"parse failed: {rc}")
-        return out.raw[:out_len.value].decode("utf-8")
-```
-
-### .NET (P/Invoke)
-
-> [!NOTE]
-> The C# examples provide a managed wrapper [`X12Client`](https://github.com/EdiFabric/native-csharp-examples/blob/main/X12/X12Client.cs) around the edifabric-x12-tools native DLL.
-
-```csharp
-[DllImport("edifabric-x12-tools", EntryPoint = "parse")]
-static extern unsafe int Parse(byte* input, int inputLen, int mode,
-                               byte* config, int configLen,
-                               byte* output, int outputCap,
-                               int* outputLen, int* outputOffset);
-```
-
-Follow the same UTF‑8 buffer + grow-and-retry + `get_result` contracts from any
-other FFI-capable language.
-
----
-
-## Support
-
-Questions, licensing, and model files: **support@edifabric.com**
-
-Copyright © EdiFabric 2026. All rights reserved.
+- [Documentation](https://support.edifabric.com/hc/en-us/articles/37276016388125-Introduction)
+- [Product page](https://www.edifabric.com/edifabric-native.html)
+- Support: support@edifabric.com
