@@ -16,7 +16,6 @@ internal static class Program
 
     private static readonly string SampleEdi = File.ReadAllText(Path.Combine(ediDir, "837p.txt"));
     private static readonly string SampleEdiInvalid = File.ReadAllText(Path.Combine(ediDir, "837p_error.txt"));
-    static byte[] localMap = File.ReadAllBytes(Path.Combine(mapDir, "map.json"));
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
 
@@ -136,8 +135,14 @@ internal static class Program
     {
         Section("Model map: set_map local");
 
-        EdiFabricX12.SetMap(localMap);
-        Console.WriteLine($"  set_map -> default='', local maps=2");
+        var mapLocation = Path.GetFullPath(mapDir);
+        var localMap = JsonNode.Parse(File.ReadAllText(Path.Combine(mapDir, "map.json")))!.AsObject();
+        var maps = localMap["maps"]!.AsObject();
+        foreach (var entry in maps)
+            entry.Value!["location"] = mapLocation;
+
+        EdiFabricX12.SetMap(localMap.ToJsonString(JsonOptions));
+        Console.WriteLine($"  set_map -> default='', local maps={maps.Count}, location={mapLocation}");
     }
 
     /// <summary>parse in mode 1</summary>

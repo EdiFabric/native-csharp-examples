@@ -4,12 +4,12 @@
     "837:005010X222A1": {
       "type": 1,
       "name": "model837P.json",
-      "location": "..\\..\\..\\map"
+      "location": "../../../map"
     },
     "834:005010X220A1": {
       "type": 1,
       "name": "model834.json",
-      "location": "..\\..\\..\\map"
+      "location": "../../../map"
     }
   }
 }
